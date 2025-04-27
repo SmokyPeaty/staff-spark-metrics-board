@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
@@ -353,6 +354,145 @@ function getPayloadConfigFromPayload(
     : config[key as keyof typeof config]
 }
 
+// Adding the BarChart component that's being imported in other files
+interface BarChartProps {
+  data: any[];
+  categories: string[];
+  index?: string;
+  colors?: string[];
+  valueFormatter?: (value: number) => string;
+  height?: number;
+  className?: string;
+  layout?: "horizontal" | "vertical";
+  showLegend?: boolean;
+}
+
+export function BarChart({
+  data,
+  categories,
+  index = "name",
+  colors = ["#3b82f6"],
+  valueFormatter = (value: number) => value.toString(),
+  height = 300,
+  className,
+  layout = "horizontal",
+  showLegend = true,
+}: BarChartProps) {
+  const isVertical = layout === "vertical";
+  const chartConfig = React.useMemo(() => {
+    return categories.reduce<ChartConfig>((config, category, i) => {
+      config[category] = { color: colors[i % colors.length] };
+      return config;
+    }, {});
+  }, [categories, colors]);
+
+  return (
+    <ChartContainer className={className} config={chartConfig}>
+      <RechartsPrimitive.BarChart
+        data={data}
+        layout={layout}
+        margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+        height={height}
+      >
+        <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+        {isVertical ? (
+          <>
+            <RechartsPrimitive.XAxis type="number" />
+            <RechartsPrimitive.YAxis dataKey={index} type="category" />
+          </>
+        ) : (
+          <>
+            <RechartsPrimitive.XAxis dataKey={index} />
+            <RechartsPrimitive.YAxis />
+          </>
+        )}
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              labelKey={index}
+              valueFormatter={valueFormatter}
+            />
+          }
+        />
+        {showLegend && (
+          <ChartLegend content={<ChartLegendContent />} />
+        )}
+        {categories.map((category, i) => (
+          <RechartsPrimitive.Bar
+            key={category}
+            dataKey={category}
+            fill={colors[i % colors.length]}
+          />
+        ))}
+      </RechartsPrimitive.BarChart>
+    </ChartContainer>
+  );
+}
+
+// Adding the LineChart component that's being imported in other files
+interface LineChartProps {
+  data: any[];
+  categories: string[];
+  index?: string;
+  colors?: string[];
+  valueFormatter?: (value: number) => string;
+  height?: number;
+  className?: string;
+  showLegend?: boolean;
+}
+
+export function LineChart({
+  data,
+  categories,
+  index = "name",
+  colors = ["#3b82f6"],
+  valueFormatter = (value: number) => value.toString(),
+  height = 300,
+  className,
+  showLegend = true,
+}: LineChartProps) {
+  const chartConfig = React.useMemo(() => {
+    return categories.reduce<ChartConfig>((config, category, i) => {
+      config[category] = { color: colors[i % colors.length] };
+      return config;
+    }, {});
+  }, [categories, colors]);
+
+  return (
+    <ChartContainer className={className} config={chartConfig}>
+      <RechartsPrimitive.LineChart
+        data={data}
+        margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+        height={height}
+      >
+        <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
+        <RechartsPrimitive.XAxis dataKey={index} />
+        <RechartsPrimitive.YAxis />
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              labelKey={index}
+              valueFormatter={valueFormatter}
+            />
+          }
+        />
+        {showLegend && (
+          <ChartLegend content={<ChartLegendContent />} />
+        )}
+        {categories.map((category, i) => (
+          <RechartsPrimitive.Line
+            key={category}
+            type="monotone"
+            dataKey={category}
+            stroke={colors[i % colors.length]}
+            activeDot={{ r: 8 }}
+          />
+        ))}
+      </RechartsPrimitive.LineChart>
+    </ChartContainer>
+  );
+}
+
 export {
   ChartContainer,
   ChartTooltip,
@@ -361,3 +501,4 @@ export {
   ChartLegendContent,
   ChartStyle,
 }
+
