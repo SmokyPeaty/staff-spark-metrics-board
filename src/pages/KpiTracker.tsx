@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +10,7 @@ import {
 } from '@/components/ui/select';
 import { Activity, Plus, Search } from 'lucide-react';
 import KraSection from '@/components/KraSection';
+import { AddKraDialog } from '@/components/AddKraDialog';
 
 // Sample KRA and KPI data - in a real app, this would come from Supabase
 const sampleKRAs = [
@@ -126,8 +126,9 @@ const kpiStatuses = ['All', 'on-track', 'at-risk', 'off-track'];
 export default function KpiTracker() {
   const [searchTerm, setSearchTerm] = useState('');
   const [status, setStatus] = useState('All');
+  const [kras, setKras] = useState(sampleKRAs);
   
-  const filteredKRAs = sampleKRAs.map(kra => {
+  const filteredKRAs = kras.map(kra => {
     const filteredKpis = kra.kpis.filter(kpi => {
       const matchesSearch = 
         kpi.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -143,6 +144,17 @@ export default function KpiTracker() {
       visible: filteredKpis.length > 0,
     };
   }).filter(kra => kra.visible);
+
+  const handleAddKra = (data: { title: string; description: string; weightage: number }) => {
+    const newKra = {
+      id: (kras.length + 1).toString(),
+      title: data.title,
+      description: data.description,
+      weightage: data.weightage,
+      kpis: [],
+    };
+    setKras([...kras, newKra]);
+  };
 
   return (
     <div className="space-y-6 p-6 md:p-8">
@@ -160,6 +172,7 @@ export default function KpiTracker() {
           <Button variant="outline">
             Export Report
           </Button>
+          <AddKraDialog onKraAdd={handleAddKra} />
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             Add KPI
