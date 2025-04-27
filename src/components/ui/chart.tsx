@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
@@ -110,6 +109,7 @@ const ChartTooltipContent = React.forwardRef<
       indicator?: "line" | "dot" | "dashed"
       nameKey?: string
       labelKey?: string
+      valueFormatter?: (value: number) => string
     }
 >(
   (
@@ -127,6 +127,7 @@ const ChartTooltipContent = React.forwardRef<
       color,
       nameKey,
       labelKey,
+      valueFormatter,
     },
     ref
   ) => {
@@ -315,7 +316,6 @@ const ChartLegendContent = React.forwardRef<
 )
 ChartLegendContent.displayName = "ChartLegend"
 
-// Helper to extract item config from a payload.
 function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,
@@ -354,7 +354,6 @@ function getPayloadConfigFromPayload(
     : config[key as keyof typeof config]
 }
 
-// Adding the BarChart component that's being imported in other files
 interface BarChartProps {
   data: any[];
   categories: string[];
@@ -410,7 +409,12 @@ export function BarChart({
           content={
             <ChartTooltipContent
               labelKey={index}
-              valueFormatter={valueFormatter}
+              formatter={(value) => {
+                if (valueFormatter && typeof value === 'number') {
+                  return valueFormatter(value);
+                }
+                return value;
+              }}
             />
           }
         />
@@ -429,7 +433,6 @@ export function BarChart({
   );
 }
 
-// Adding the LineChart component that's being imported in other files
 interface LineChartProps {
   data: any[];
   categories: string[];
@@ -472,7 +475,12 @@ export function LineChart({
           content={
             <ChartTooltipContent
               labelKey={index}
-              valueFormatter={valueFormatter}
+              formatter={(value) => {
+                if (valueFormatter && typeof value === 'number') {
+                  return valueFormatter(value);
+                }
+                return value;
+              }}
             />
           }
         />
@@ -501,4 +509,3 @@ export {
   ChartLegendContent,
   ChartStyle,
 }
-
