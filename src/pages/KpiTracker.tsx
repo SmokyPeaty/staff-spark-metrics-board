@@ -8,9 +8,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Activity, Plus, Search } from 'lucide-react';
+import { Activity, Search } from 'lucide-react';
 import KraSection from '@/components/KraSection';
 import { AddKraDialog } from '@/components/AddKraDialog';
+import { AddKpiDialog } from '@/components/AddKpiDialog';
 
 // Sample KRA and KPI data - in a real app, this would come from Supabase
 const sampleKRAs = [
@@ -156,6 +157,25 @@ export default function KpiTracker() {
     setKras([...kras, newKra]);
   };
 
+  const handleAddKpi = (data: { kraId: string; title: string; description: string; target: string; dueDate: string }) => {
+    const newKpi = {
+      id: Math.random().toString(36).substr(2, 9),
+      title: data.title,
+      description: data.description,
+      target: data.target,
+      currentValue: '0',
+      progress: 0,
+      dueDate: data.dueDate,
+      status: 'on-track' as const,
+    };
+
+    setKras(kras.map(kra => 
+      kra.id === data.kraId 
+        ? { ...kra, kpis: [...kra.kpis, newKpi] }
+        : kra
+    ));
+  };
+
   return (
     <div className="space-y-6 p-6 md:p-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -173,10 +193,10 @@ export default function KpiTracker() {
             Export Report
           </Button>
           <AddKraDialog onKraAdd={handleAddKra} />
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add KPI
-          </Button>
+          <AddKpiDialog
+            kras={kras.map(kra => ({ id: kra.id, title: kra.title }))}
+            onKpiAdd={handleAddKpi}
+          />
         </div>
       </div>
 
