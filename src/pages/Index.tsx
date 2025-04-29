@@ -1,10 +1,10 @@
-
 import React from 'react';
 import DashboardStats from '@/components/DashboardStats';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EmployeeList from '@/components/EmployeeList';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, LineChart } from '@/components/ui/chart';
+import { Employee } from '@/types/employee';
 
 const Index = () => {
   // Sample data for charts
@@ -74,6 +74,39 @@ const Index = () => {
     },
   ];
 
+  // Sample employees for the dashboard view
+  const dashboardEmployees: Employee[] = [
+    {
+      id: '1',
+      name: 'John Smith',
+      position: 'Sales Manager',
+      department: 'Sales',
+      email: 'john.smith@example.com',
+      kpiProgress: 85,
+      kpiCount: 6,
+      status: 'on-track',
+    },
+    {
+      id: '2',
+      name: 'Sarah Johnson',
+      position: 'Marketing Specialist',
+      department: 'Marketing',
+      email: 'sarah.j@example.com',
+      kpiProgress: 68,
+      kpiCount: 5,
+      status: 'at-risk',
+    },
+  ];
+
+  // Dummy handlers for the dashboard view - these would redirect to the employee page in a real app
+  const handleEdit = (id: string) => {
+    console.log(`Edit employee ${id} - would redirect in a real app`);
+  };
+
+  const handleDelete = (id: string) => {
+    console.log(`Delete employee ${id} - would redirect in a real app`);
+  };
+
   return (
     <div className="space-y-6 p-6 md:p-8">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -96,7 +129,11 @@ const Index = () => {
         </TabsList>
         
         <TabsContent value="employees" className="mt-4 space-y-4">
-          <EmployeeList />
+          <EmployeeList 
+            employees={dashboardEmployees} 
+            onEdit={handleEdit} 
+            onDelete={handleDelete} 
+          />
         </TabsContent>
         
         <TabsContent value="performance" className="mt-4 space-y-4">
