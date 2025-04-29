@@ -10,10 +10,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus, Search, Users } from 'lucide-react';
-import EmployeeCard from '@/components/EmployeeCard';
+import EmployeeList from '@/components/EmployeeList';
+import EmployeeDialog from '@/components/EmployeeDialog';
+import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog';
+import { Employee } from '@/types/employee';
+import { useToast } from '@/components/ui/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
 // Sample employee data - in a real app, this would come from Supabase
-const allEmployees = [
+const initialEmployees: Employee[] = [
   {
     id: '1',
     name: 'John Smith',
@@ -22,7 +27,9 @@ const allEmployees = [
     email: 'john.smith@example.com',
     kpiProgress: 85,
     kpiCount: 6,
-    status: 'on-track' as const,
+    status: 'on-track',
+    manager: 'Sarah Johnson',
+    location: 'New York',
   },
   {
     id: '2',
@@ -32,7 +39,9 @@ const allEmployees = [
     email: 'sarah.j@example.com',
     kpiProgress: 68,
     kpiCount: 5,
-    status: 'at-risk' as const,
+    status: 'at-risk',
+    manager: 'David Miller',
+    location: 'Boston',
   },
   {
     id: '3',
@@ -42,7 +51,9 @@ const allEmployees = [
     email: 'michael.c@example.com',
     kpiProgress: 92,
     kpiCount: 4,
-    status: 'on-track' as const,
+    status: 'on-track',
+    manager: 'Lisa Taylor',
+    location: 'San Francisco',
   },
   {
     id: '4',
@@ -52,7 +63,9 @@ const allEmployees = [
     email: 'jessica.w@example.com',
     kpiProgress: 45,
     kpiCount: 7,
-    status: 'off-track' as const,
+    status: 'off-track',
+    manager: 'David Miller',
+    location: 'Chicago',
   },
   {
     id: '5',
@@ -62,7 +75,9 @@ const allEmployees = [
     email: 'david.m@example.com',
     kpiProgress: 76,
     kpiCount: 5,
-    status: 'on-track' as const,
+    status: 'on-track',
+    manager: 'Robert Garcia',
+    location: 'Miami',
   },
   {
     id: '6',
@@ -72,37 +87,9 @@ const allEmployees = [
     email: 'lisa.t@example.com',
     kpiProgress: 62,
     kpiCount: 4,
-    status: 'at-risk' as const,
-  },
-  {
-    id: '7',
-    name: 'Robert Garcia',
-    position: 'Operations Manager',
-    department: 'Operations',
-    email: 'robert.g@example.com',
-    kpiProgress: 80,
-    kpiCount: 6,
-    status: 'on-track' as const,
-  },
-  {
-    id: '8',
-    name: 'Emily Wilson',
-    position: 'Graphic Designer',
-    department: 'Marketing',
-    email: 'emily.w@example.com',
-    kpiProgress: 55,
-    kpiCount: 5,
-    status: 'at-risk' as const,
-  },
-  {
-    id: '9',
-    name: 'Daniel Thompson',
-    position: 'Sales Representative',
-    department: 'Sales',
-    email: 'daniel.t@example.com',
-    kpiProgress: 30,
-    kpiCount: 4,
-    status: 'off-track' as const,
+    status: 'at-risk',
+    manager: 'David Miller',
+    location: 'Austin',
   },
 ];
 
@@ -110,11 +97,18 @@ const departments = ['All', 'Sales', 'Marketing', 'Engineering', 'HR', 'Finance'
 const statuses = ['All', 'on-track', 'at-risk', 'off-track'];
 
 export default function Employees() {
+  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
   const [searchTerm, setSearchTerm] = useState('');
   const [department, setDepartment] = useState('All');
   const [status, setStatus] = useState('All');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [currentEmployee, setCurrentEmployee] = useState<Employee | undefined>(undefined);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | undefined>(undefined);
+  
+  const { toast } = useToast();
 
-  const filteredEmployees = allEmployees.filter((employee) => {
+  const filteredEmployees = employees.filter((employee) => {
     const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           employee.position.toLowerCase().includes(searchTerm.toLowerCase());
@@ -123,6 +117,71 @@ export default function Employees() {
     
     return matchesSearch && matchesDepartment && matchesStatus;
   });
+
+  const handleAddEmployee = (data: Partial<Employee>) => {
+    const newEmployee: Employee = {
+      ...data,
+      id: uuidv4(),
+      kpiProgress: 0,
+      kpiCount: 0,
+      status: data.status || 'on-track',
+    } as Employee;
+    
+    setEmployees([...employees, newEmployee]);
+    toast({
+      title: "Employee added!",
+      description: `${newEmployee.name} has been successfully added.`,
+    });
+  };
+
+  const handleEditEmployee = (data: Partial<Employee>) => {
+    if (currentEmployee) {
+      setEmployees(employees.map(emp => 
+        emp.id === currentEmployee.id ? { ...emp, ...data } : emp
+      ));
+      toast({
+        title: "Employee updated!",
+        description: `${data.name} has been successfully updated.`,
+      });
+    }
+  };
+
+  const handleDeleteEmployee = () => {
+    if (employeeToDelete) {
+      setEmployees(employees.filter(emp => emp.id !== employeeToDelete.id));
+      toast({
+        title: "Employee deleted!",
+        description: `${employeeToDelete.name} has been successfully removed.`,
+      });
+    }
+  };
+
+  const openEditDialog = (id: string) => {
+    const employee = employees.find(emp => emp.id === id);
+    setCurrentEmployee(employee);
+    setIsDialogOpen(true);
+  };
+
+  const openDeleteDialog = (id: string) => {
+    const employee = employees.find(emp => emp.id === id);
+    setEmployeeToDelete(employee);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setCurrentEmployee(undefined);
+    }
+  };
+
+  const handleSubmit = (data: any) => {
+    if (currentEmployee) {
+      handleEditEmployee(data);
+    } else {
+      handleAddEmployee(data);
+    }
+  };
 
   return (
     <div className="space-y-6 p-6 md:p-8">
@@ -136,7 +195,7 @@ export default function Employees() {
             Manage staff and assign KPIs
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setIsDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Employee
         </Button>
@@ -185,21 +244,28 @@ export default function Employees() {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredEmployees.map((employee) => (
-          <EmployeeCard key={employee.id} {...employee} />
-        ))}
-        
-        {filteredEmployees.length === 0 && (
-          <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-            <Users size={48} className="text-muted-foreground/50 mb-4" />
-            <h3 className="text-xl font-medium">No employees found</h3>
-            <p className="text-muted-foreground max-w-sm mt-2">
-              Try adjusting your search or filter criteria to find what you're looking for.
-            </p>
-          </div>
-        )}
-      </div>
+      <EmployeeList 
+        employees={filteredEmployees} 
+        onEdit={openEditDialog} 
+        onDelete={openDeleteDialog} 
+      />
+
+      <EmployeeDialog
+        open={isDialogOpen}
+        onOpenChange={handleDialogOpenChange}
+        onSubmit={handleSubmit}
+        employee={currentEmployee}
+        departments={departments}
+      />
+
+      {employeeToDelete && (
+        <DeleteConfirmationDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onConfirm={handleDeleteEmployee}
+          name={employeeToDelete.name}
+        />
+      )}
     </div>
   );
 }

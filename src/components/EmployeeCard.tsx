@@ -4,6 +4,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Edit, Trash2 } from 'lucide-react';
 
 type EmployeeCardProps = {
   id: string;
@@ -14,6 +16,8 @@ type EmployeeCardProps = {
   kpiProgress: number;
   kpiCount: number;
   status: 'on-track' | 'at-risk' | 'off-track';
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
 };
 
 export default function EmployeeCard({
@@ -25,6 +29,8 @@ export default function EmployeeCard({
   kpiProgress,
   kpiCount,
   status,
+  onEdit,
+  onDelete,
 }: EmployeeCardProps) {
   const getStatusColor = () => {
     switch (status) {
@@ -83,6 +89,14 @@ export default function EmployeeCard({
                   {kpiCount} KPIs assigned
                 </span>
                 <span className="text-xs text-muted-foreground">Department: {department}</span>
+              </div>
+              <div className="flex justify-end mt-3 gap-2">
+                <Button variant="outline" size="sm" onClick={() => onEdit(id)}>
+                  <Edit className="h-4 w-4 mr-1" /> Edit
+                </Button>
+                <Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive/10" onClick={() => onDelete(id)}>
+                  <Trash2 className="h-4 w-4 mr-1" /> Delete
+                </Button>
               </div>
             </div>
           </div>
