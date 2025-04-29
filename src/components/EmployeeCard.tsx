@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, ClipboardCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 type EmployeeCardProps = {
   id: string;
@@ -32,6 +33,8 @@ export default function EmployeeCard({
   onEdit,
   onDelete,
 }: EmployeeCardProps) {
+  const navigate = useNavigate();
+  
   const getStatusColor = () => {
     switch (status) {
       case 'on-track':
@@ -51,6 +54,10 @@ export default function EmployeeCard({
       .map(part => part[0])
       .join('')
       .toUpperCase();
+  };
+
+  const handleReviewClick = () => {
+    navigate(`/employee-review/${id}`);
   };
 
   return (
@@ -90,13 +97,18 @@ export default function EmployeeCard({
                 </span>
                 <span className="text-xs text-muted-foreground">Department: {department}</span>
               </div>
-              <div className="flex justify-end mt-3 gap-2">
-                <Button variant="outline" size="sm" onClick={() => onEdit(id)}>
-                  <Edit className="h-4 w-4 mr-1" /> Edit
+              <div className="flex justify-between mt-3 gap-2">
+                <Button variant="outline" size="sm" onClick={handleReviewClick}>
+                  <ClipboardCheck className="h-4 w-4 mr-1" /> Review
                 </Button>
-                <Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive/10" onClick={() => onDelete(id)}>
-                  <Trash2 className="h-4 w-4 mr-1" /> Delete
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => onEdit(id)}>
+                    <Edit className="h-4 w-4 mr-1" /> Edit
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive/10" onClick={() => onDelete(id)}>
+                    <Trash2 className="h-4 w-4 mr-1" /> Delete
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
