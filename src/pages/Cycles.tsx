@@ -19,7 +19,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { Cycle, ReviewFrequency, ReviewWindow } from '@/types/employee';
+import { Cycle, ReviewFrequency, ReviewWindow, WindowStatus } from '@/types/employee';
 
 // Mock data - In a real app, this would come from your API/database
 const cyclesData: Cycle[] = [
@@ -152,7 +152,7 @@ export default function Cycles() {
           name: `Q${i + 1}`,
           startDate: windowStart.toISOString().split('T')[0],
           endDate: windowEnd.toISOString().split('T')[0],
-          status: i === 0 ? 'open' : 'upcoming'
+          status: i === 0 ? 'open' as WindowStatus : 'upcoming' as WindowStatus
         });
       }
     } else if (frequency === 'half-yearly') {
@@ -169,7 +169,7 @@ export default function Cycles() {
           name: `H${i + 1}`,
           startDate: windowStart.toISOString().split('T')[0],
           endDate: windowEnd.toISOString().split('T')[0],
-          status: i === 0 ? 'open' : 'upcoming'
+          status: i === 0 ? 'open' as WindowStatus : 'upcoming' as WindowStatus
         });
       }
     }
@@ -207,10 +207,10 @@ export default function Cycles() {
       if (cycle.id === cycleId) {
         return {
           ...cycle,
-          status: 'closed',
+          status: 'closed' as const,
           windows: cycle.windows.map(window => ({
             ...window,
-            status: 'closed'
+            status: 'closed' as WindowStatus
           }))
         };
       }
