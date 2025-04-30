@@ -10,6 +10,7 @@ import Employees from "./pages/Employees";
 import KpiTracker from "./pages/KpiTracker";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Cycles from "./pages/Cycles";
 import EmployeeReview from "./pages/EmployeeReview";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
@@ -36,6 +37,7 @@ function App() {
                   <Route path="/kpi-tracker" element={<KpiTracker />} />
                   <Route path="/reports" element={<Reports />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/cycles" element={<Cycles />} />
                   <Route path="/employee-review/:id" element={<EmployeeReview />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

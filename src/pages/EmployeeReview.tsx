@@ -9,13 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Employee, Review, ReviewStatus, Kpi, KpiReview } from '@/types/employee';
+import { Employee, Review, ReviewStatus, Kpi, KpiReview, Cycle, ReviewWindow } from '@/types/employee';
 
 // Mock data - In a real app, this would come from your API/database
 const employeesData: Employee[] = [
@@ -57,6 +56,52 @@ const employeesData: Employee[] = [
   // ... more employees would be here in a real app
 ];
 
+// Mock cycle data
+const cyclesData: Cycle[] = [
+  {
+    id: '2',
+    name: 'FY 2024-25',
+    startDate: '2024-04-01',
+    endDate: '2025-03-31',
+    frequency: 'quarterly',
+    status: 'active',
+    windows: [
+      {
+        id: 'w5',
+        cycleId: '2',
+        name: 'Q1',
+        startDate: '2024-04-01',
+        endDate: '2024-06-30',
+        status: 'open'
+      },
+      {
+        id: 'w6',
+        cycleId: '2',
+        name: 'Q2',
+        startDate: '2024-07-01',
+        endDate: '2024-09-30',
+        status: 'upcoming'
+      },
+      {
+        id: 'w7',
+        cycleId: '2',
+        name: 'Q3',
+        startDate: '2024-10-01',
+        endDate: '2024-12-31',
+        status: 'upcoming'
+      },
+      {
+        id: 'w8',
+        cycleId: '2',
+        name: 'Q4',
+        startDate: '2025-01-01',
+        endDate: '2025-03-31',
+        status: 'upcoming'
+      }
+    ]
+  }
+];
+
 const ratingOptions = [
   { value: 1, label: '1 - Needs Improvement' },
   { value: 2, label: '2 - Developing' },
@@ -75,6 +120,8 @@ const kpiReviewSchema = z.object({
 
 // Form schema for the entire review
 const reviewSchema = z.object({
+  cycleId: z.string().optional(),
+  windowId: z.string().optional(),
   kpiReviews: z.array(kpiReviewSchema),
   finalManagerComment: z.string().optional(),
 });
@@ -85,6 +132,9 @@ export default function EmployeeReview() {
   const { id } = useParams<{ id: string }>();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [review, setReview] = useState<Review | null>(null);
+  const [cycles, setCycles] = useState<Cycle[]>(cyclesData);
+  const [selectedCycle, setSelectedCycle] = useState<Cycle | null>(null);
+  const [selectedWindow, setSelectedWindow] = useState<ReviewWindow | null>(null);
   const [isManager, setIsManager] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -108,9 +158,21 @@ export default function EmployeeReview() {
         const userIsManager = Math.random() > 0.5; // Random for demo
         setIsManager(userIsManager);
         
+        // Set the active cycle and window
+        const activeCycle = cycles.find(c => c.status === 'active');
+        if (activeCycle) {
+          setSelectedCycle(activeCycle);
+          const openWindow = activeCycle.windows.find(w => w.status === 'open');
+          if (openWindow) {
+            setSelectedWindow(openWindow);
+          }
+        }
+        
         // Get or create review
         let existingReview = foundEmployee.reviews?.find(r => r.status !== 'reviewed');
-        if (!existingReview) {
+        if (!existingReview && activeCycle) {
+          const openWindow = activeCycle.windows.find(w => w.status === 'open');
+          
           // Create KPI review objects
           const kpiReviews: KpiReview[] = foundEmployee.kpis?.map(kpi => ({
             kpiId: kpi.id,
@@ -127,6 +189,8 @@ export default function EmployeeReview() {
             id: uuidv4(),
             employeeId: foundEmployee.id,
             date: new Date().toISOString().split('T')[0],
+            cycleId: activeCycle.id,
+            windowId: openWindow?.id,
             status: 'pending' as ReviewStatus,
             kpiReviews: kpiReviews,
           };
@@ -137,20 +201,24 @@ export default function EmployeeReview() {
           foundEmployee.reviews.push(existingReview);
         }
         
-        setReview(existingReview);
+        setReview(existingReview || null);
         
         // Populate form with existing review data
-        const kpiReviewValues = existingReview.kpiReviews.map(kr => ({
-          selfRating: kr.selfRating,
-          selfComment: kr.selfComment || "",
-          managerRating: kr.managerRating,
-          managerComment: kr.managerComment || "",
-        }));
-        
-        form.reset({
-          kpiReviews: kpiReviewValues,
-          finalManagerComment: existingReview.finalManagerComment || "",
-        });
+        if (existingReview) {
+          const kpiReviewValues = existingReview.kpiReviews.map(kr => ({
+            selfRating: kr.selfRating,
+            selfComment: kr.selfComment || "",
+            managerRating: kr.managerRating,
+            managerComment: kr.managerComment || "",
+          }));
+          
+          form.reset({
+            cycleId: existingReview.cycleId,
+            windowId: existingReview.windowId,
+            kpiReviews: kpiReviewValues,
+            finalManagerComment: existingReview.finalManagerComment || "",
+          });
+        }
       }
     }
   }, [id, form]);
@@ -247,7 +315,15 @@ export default function EmployeeReview() {
             </p>
           </div>
         </div>
-        <Button variant="outline" onClick={() => navigate(-1)}>Back</Button>
+        <div className="flex gap-2">
+          {selectedCycle && selectedWindow && (
+            <div className="text-right">
+              <div className="text-sm font-medium">{selectedCycle.name}</div>
+              <div className="text-sm text-muted-foreground">{selectedWindow.name} Review</div>
+            </div>
+          )}
+          <Button variant="outline" onClick={() => navigate(-1)}>Back</Button>
+        </div>
       </div>
 
       <Card>
@@ -267,6 +343,77 @@ export default function EmployeeReview() {
                 ? form.handleSubmit(onSubmitManagerReview) 
                 : form.handleSubmit(onSubmitSelfReview)
             } className="space-y-6">
+              
+              {/* Cycle and Window Selection */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="cycleId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Review Cycle</FormLabel>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          const cycle = cycles.find(c => c.id === value);
+                          if (cycle) setSelectedCycle(cycle);
+                        }}
+                        defaultValue={field.value}
+                        disabled={review?.status !== 'pending'}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select cycle" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {cycles.map((cycle) => (
+                            <SelectItem key={cycle.id} value={cycle.id}>{cycle.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="windowId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Review Window</FormLabel>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          if (selectedCycle) {
+                            const window = selectedCycle.windows.find(w => w.id === value);
+                            if (window) setSelectedWindow(window);
+                          }
+                        }}
+                        defaultValue={field.value}
+                        disabled={review?.status !== 'pending' || !selectedCycle}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select window" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {selectedCycle?.windows.map((window) => (
+                            <SelectItem key={window.id} value={window.id}>
+                              {window.name} ({window.startDate} to {window.endDate})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <Separator />
               
               {/* KPI Reviews Section */}
               {review?.kpiReviews.map((kpiReview, kpiIndex) => (
