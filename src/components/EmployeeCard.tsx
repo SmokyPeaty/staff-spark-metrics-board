@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, ClipboardCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { EmployeeStatus } from '@/types/employee';
 
 type EmployeeCardProps = {
   id: string;
@@ -16,7 +17,7 @@ type EmployeeCardProps = {
   email: string;
   kpiProgress: number;
   kpiCount: number;
-  status: 'on-track' | 'at-risk' | 'off-track';
+  status: EmployeeStatus;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
 };
